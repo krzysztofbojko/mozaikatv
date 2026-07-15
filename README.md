@@ -8,7 +8,9 @@ w losowym odstępie od 3 do 5 sekund.
 
 Wymagany jest uruchomiony Docker Desktop.
 
-1. Umieść co najmniej cztery filmy w katalogu `filmy`.
+1. Umieść w katalogu `filmy` cztery pliki MP4 o dokładnych nazwach:
+   `film1.mp4`, `film2.mp4`, `film3.mp4` i `film4.mp4` (`filmX.mp4`, gdzie
+   `X` ma wartość od 1 do 4).
 2. Uruchom `Uruchom mozaike.bat`.
 3. Otwórz widok prezentacyjny: <http://localhost:8090>.
 4. Ustawienia są dostępne pod <http://localhost:8090/admin>.
