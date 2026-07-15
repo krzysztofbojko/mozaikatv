@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      MOSAIC_REFRESH_MIN: ${MOSAIC_REFRESH_MIN:-3}
+      MOSAIC_REFRESH_MAX: ${MOSAIC_REFRESH_MAX:-5}
+      MOSAIC_FRAME_WIDTH: ${MOSAIC_FRAME_WIDTH:-960}
+      MOSAIC_FRAME_HEIGHT: ${MOSAIC_FRAME_HEIGHT:-540}
+      MOSAIC_RETAINED_BATCHES: ${MOSAIC_RETAINED_BATCHES:-30}
+    volumes:
+      - ./filmy:/videos:ro
+      - mosaic-runtime:/runtime
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${MOSAIC_PORT:-8090}:8080"
+
+volumes:
+  mosaic-runtime:

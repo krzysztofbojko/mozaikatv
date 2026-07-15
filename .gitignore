@@ -1,0 +1,13 @@
+tools/
+*.part
+.env
+filmy/*
+!filmy/.gitkeep
+.venv/
+__pycache__/
+.pytest_cache/
+frontend/node_modules/
+frontend/.svelte-kit/
+frontend/build/
+runtime/
+.artifacts/

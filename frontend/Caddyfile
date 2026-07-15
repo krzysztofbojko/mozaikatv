@@ -1,0 +1,22 @@
+:8080 {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy backend:8000 {
+			flush_interval -1
+		}
+	}
+
+	handle /frames/* {
+		header Cache-Control "public, max-age=31536000, immutable"
+		reverse_proxy backend:8000 {
+			header_down Content-Type "image/webp"
+		}
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -1,0 +1,10 @@
+.git
+.venv
+runtime
+filmy
+tools
+frontend/node_modules
+frontend/.svelte-kit
+frontend/build
+**/__pycache__
+**/.pytest_cache

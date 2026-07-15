@@ -1,0 +1,25 @@
+{
+  "name": "mozaika-tv-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@sveltejs/kit": "2.69.3",
+    "svelte": "5.56.5"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "3.0.10",
+    "@sveltejs/vite-plugin-svelte": "7.2.0",
+    "svelte-check": "4.7.2",
+    "typescript": "5.9.3",
+    "vite": "8.1.4"
+  },
+  "overrides": {
+    "cookie": "0.7.2"
+  }
+}
