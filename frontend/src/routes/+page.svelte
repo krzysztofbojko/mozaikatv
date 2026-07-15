@@ -86,6 +86,6 @@
 
   <footer>
     <span><i></i> AUTOMATYCZNA SYNCHRONIZACJA KLATEK</span>
-    <span>MOZAIKA TV / RESEARCH BUILD 01</span>
+    <span>RTV MCB UKSW</span>
   </footer>
 </div>
