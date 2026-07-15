@@ -18,6 +18,17 @@ class SuccessfulCapture:
         target.write_bytes(b"frame")
 
 
+class RecordingCapture(SuccessfulCapture):
+    def __init__(self) -> None:
+        self.source_ids: list[str] = []
+
+    async def capture(
+        self, source: VideoSource, position_seconds: float, target: Path
+    ) -> None:
+        self.source_ids.append(source.id)
+        await super().capture(source, position_seconds, target)
+
+
 @pytest.mark.asyncio
 async def test_admin_api_updates_and_persists_running_configuration(
     tmp_path: Path,
@@ -241,3 +252,97 @@ async def test_admin_api_accepts_youtube_video_and_live_sources(
     assert engine.sources[1].path == "https://stream.example/live.m3u8"
     assert engine.sources[1].duration_seconds is None
     assert engine.sources[1].is_live is True
+
+
+@pytest.mark.asyncio
+async def test_admin_api_can_disable_multiple_tiles(tmp_path: Path) -> None:
+    videos_dir = tmp_path / "filmy"
+    videos_dir.mkdir()
+    for number in range(1, 5):
+        (videos_dir / f"film{number}.mp4").write_bytes(b"test")
+
+    settings = Settings(
+        videos_dir=videos_dir,
+        runtime_dir=tmp_path / "runtime",
+        ffmpeg_bin="ffmpeg",
+        ffprobe_bin="ffprobe",
+        refresh_min_seconds=3,
+        refresh_max_seconds=5,
+        frame_width=960,
+        frame_height=540,
+        retained_batches=30,
+    )
+    initial_sources = [
+        VideoSource(
+            f"source-{number}", f"Film {number}", videos_dir / f"film{number}.mp4", 60
+        )
+        for number in range(1, 5)
+    ]
+    capture = RecordingCapture()
+    engine = MosaicEngine(initial_sources, capture, settings.frames_dir)
+
+    async def duration_probe(_: Path, __: str) -> float:
+        return 60.0
+
+    controller = await AdminController.create(
+        settings=settings,
+        engine=engine,
+        duration_probe=duration_probe,
+        capture_factory=lambda _: capture,
+    )
+    app = create_app(
+        engine=engine,
+        settings=settings,
+        admin_controller=controller,
+        start_engine=False,
+    )
+    update = {
+        "refresh_min_seconds": 3,
+        "refresh_max_seconds": 5,
+        "frame_width": 960,
+        "frame_height": 540,
+        "webp_quality": 78,
+        "streams": [
+            {
+                "slot": number,
+                "source_type": "none",
+                "filename": "",
+                "url": "",
+                "title": "",
+            }
+            for number in (1, 2)
+        ]
+        + [
+            {
+                "slot": number,
+                "source_type": "local",
+                "filename": f"film{number}.mp4",
+                "url": "",
+                "title": f"Film {number}",
+            }
+            for number in (3, 4)
+        ],
+    }
+
+    async with app.router.lifespan_context(app):
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(
+            transport=transport, base_url="http://test"
+        ) as client:
+            saved = await client.put("/api/admin/config", json=update)
+            assert saved.status_code == 200, saved.text
+
+            await engine.publish_cycle(playback_seconds=4.0)
+            mosaic = await client.get("/api/mosaic")
+            health = await client.get("/api/health")
+
+    assert saved.json()["config"] == update
+    assert capture.source_ids == ["source-3", "source-4"]
+    assert [tile["status"] for tile in mosaic.json()["tiles"]] == [
+        "disabled",
+        "disabled",
+        "online",
+        "online",
+    ]
+    assert [tile["frame_url"] for tile in mosaic.json()["tiles"][:2]] == ["", ""]
+    assert health.json()["status"] == "ok"

@@ -19,7 +19,7 @@ class VideoSource:
     title: str
     path: Path | str
     duration_seconds: float | None
-    source_type: Literal["local", "youtube"] = "local"
+    source_type: Literal["none", "local", "youtube"] = "local"
     webpage_url: str | None = None
     is_live: bool = False
 
@@ -37,7 +37,7 @@ class TileSnapshot(BaseModel):
     frame_url: str
     captured_at: datetime
     position_seconds: float
-    status: Literal["online", "delayed", "offline"]
+    status: Literal["online", "delayed", "offline", "disabled"]
     error: str | None = None
 
 
@@ -103,6 +103,9 @@ class MosaicEngine:
 
         positions: dict[str, float] = {}
         for source in self.sources:
+            if source.source_type == "none":
+                positions[source.id] = 0.0
+                continue
             if source.is_live:
                 positions[source.id] = 0.0
                 continue
@@ -115,11 +118,14 @@ class MosaicEngine:
             source.id: batch_dir / f"{source.id}.webp" for source in self.sources
         }
 
+        async def capture_source(source: VideoSource) -> None:
+            if source.source_type != "none":
+                await self.capture.capture(
+                    source, positions[source.id], targets[source.id]
+                )
+
         results = await asyncio.gather(
-            *(
-                self.capture.capture(source, positions[source.id], targets[source.id])
-                for source in self.sources
-            ),
+            *(capture_source(source) for source in self.sources),
             return_exceptions=True,
         )
 
@@ -128,6 +134,19 @@ class MosaicEngine:
         )
         tiles: list[TileSnapshot] = []
         for source, result in zip(self.sources, results, strict=True):
+            if source.source_type == "none":
+                tiles.append(
+                    TileSnapshot(
+                        source_id=source.id,
+                        title="",
+                        batch_id=batch_id,
+                        frame_url="",
+                        captured_at=captured_at,
+                        position_seconds=0.0,
+                        status="disabled",
+                    )
+                )
+                continue
             if not isinstance(result, BaseException):
                 tiles.append(
                     TileSnapshot(

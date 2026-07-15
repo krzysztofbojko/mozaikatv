@@ -105,8 +105,9 @@ ich ścieżkę przez `MOSAIC_YOUTUBE_COOKIEFILE`. Pliku nie dodawaj do repozytor
 - klatki mają format WebP i domyślnie rozdzielczość 960×540;
 - po awarii źródła widoczna pozostaje jego ostatnia poprawna klatka;
 - przechowywane jest ostatnich 30 partii;
-- panel `/admin` pozwala bez restartu wybrać plik lokalny albo wkleić adres
-  filmu/transmisji YouTube oraz zmienić nazwę, interwał, rozdzielczość i jakość;
+- panel `/admin` pozwala bez restartu pozostawić pusty kafelek, wybrać plik
+  lokalny albo wkleić adres filmu/transmisji YouTube oraz zmienić nazwę,
+  interwał, rozdzielczość i jakość;
 - zwykłe filmy YouTube są przesuwane i zapętlane tak jak pliki lokalne;
 - dla transmisji YouTube Live przechwytywana jest bieżąca klatka;
 - wygasający techniczny adres strumienia YouTube jest automatycznie odświeżany

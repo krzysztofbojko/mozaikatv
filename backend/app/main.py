@@ -105,7 +105,7 @@ def create_app(
             return {"status": "starting", "version": 0, "sources": []}
         return {
             "status": "ok"
-            if all(tile.status == "online" for tile in state.tiles)
+            if all(tile.status in {"online", "disabled"} for tile in state.tiles)
             else "degraded",
             "version": state.version,
             "sources": [

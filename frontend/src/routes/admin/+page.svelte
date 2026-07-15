@@ -67,13 +67,20 @@
     }
   }
 
-  function setSourceType(stream: AdminConfig['streams'][number], sourceType: 'local' | 'youtube') {
+  function setSourceType(
+    stream: AdminConfig['streams'][number],
+    sourceType: AdminConfig['streams'][number]['source_type']
+  ) {
     stream.source_type = sourceType;
     if (sourceType === 'local') {
       stream.url = '';
       stream.filename ||= payload?.available_videos[0] ?? '';
+    } else if (sourceType === 'youtube') {
+      stream.filename = '';
     } else {
       stream.filename = '';
+      stream.url = '';
+      stream.title = '';
     }
   }
 </script>
@@ -98,7 +105,7 @@
       <div>
         <span class="eyebrow">SYSTEM / STREAM CONTROL</span>
         <h1>Ustawienia mozaiki</h1>
-        <p>Wybierz cztery źródła: pliki lokalne, filmy YouTube lub transmisje YouTube Live. Zapis działa bez restartu aplikacji.</p>
+        <p>Dla każdego kafelka wybierz plik lokalny, film lub transmisję YouTube Live albo opcję Brak. Zapis działa bez restartu aplikacji.</p>
       </div>
       <div class="runtime-status">
         <i class:active={mosaic}></i>
@@ -149,13 +156,15 @@
             {#each config.streams as stream (stream.slot)}
               <article class="source-card">
                 <div class="mini-preview">
-                  {#if mosaic?.tiles[stream.slot - 1]?.frame_url}
+                  {#if stream.source_type === 'none'}
+                    <span>PUSTY KAFELEK</span>
+                  {:else if mosaic?.tiles[stream.slot - 1]?.frame_url}
                     <img src={mosaic.tiles[stream.slot - 1].frame_url} alt="" />
                   {:else}
                     <span>NO SIGNAL</span>
                   {/if}
                   <b>0{stream.slot}</b>
-                  <i></i>
+                  {#if stream.source_type !== 'none'}<i></i>{/if}
                 </div>
                 <div class="source-fields">
                   <label>
@@ -164,9 +173,10 @@
                       value={stream.source_type}
                       onchange={(event) => setSourceType(
                         stream,
-                        event.currentTarget.value as 'local' | 'youtube'
+                        event.currentTarget.value as AdminConfig['streams'][number]['source_type']
                       )}
                     >
+                      <option value="none">Brak</option>
                       <option value="local">Plik lokalny</option>
                       <option value="youtube">YouTube / YouTube Live</option>
                     </select>
@@ -180,7 +190,7 @@
                         {/each}
                       </select>
                     </label>
-                  {:else}
+                  {:else if stream.source_type === 'youtube'}
                     <label>
                       <span>Adres filmu lub transmisji YouTube</span>
                       <input
@@ -191,10 +201,12 @@
                       />
                     </label>
                   {/if}
-                  <label>
-                    <span>Nazwa ekranowa</span>
-                    <input type="text" minlength="1" maxlength="80" bind:value={stream.title} required />
-                  </label>
+                  {#if stream.source_type !== 'none'}
+                    <label>
+                      <span>Nazwa ekranowa</span>
+                      <input type="text" minlength="1" maxlength="80" bind:value={stream.title} required />
+                    </label>
+                  {/if}
                 </div>
               </article>
             {/each}

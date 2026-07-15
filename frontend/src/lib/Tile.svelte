@@ -15,12 +15,23 @@
     Math.max(0, Math.round((now.getTime() - new Date(tile.captured_at).getTime()) / 1000))
   );
   const statusText = $derived(
-    tile.status === 'online' ? 'AKTYWNY' : tile.status === 'delayed' ? 'OPÓŹNIONY' : 'OFFLINE'
+    tile.status === 'online'
+      ? 'AKTYWNY'
+      : tile.status === 'delayed'
+        ? 'OPÓŹNIONY'
+        : tile.status === 'disabled'
+          ? 'WYŁĄCZONY'
+          : 'OFFLINE'
   );
 
   $effect(() => {
     const nextUrl = tile.frame_url;
-    if (!nextUrl || nextUrl === currentUrl || typeof Image === 'undefined') return;
+    if (!nextUrl) {
+      previousUrl = '';
+      currentUrl = '';
+      return;
+    }
+    if (nextUrl === currentUrl || typeof Image === 'undefined') return;
 
     let cancelled = false;
     const image = new Image();
@@ -44,6 +55,7 @@
 
 <article class="tile status-{tile.status}">
   <div class="viewport">
+    {#if tile.status !== 'disabled'}
     {#if previousUrl}
       <img class="frame previous" src={previousUrl} alt="" aria-hidden="true" />
     {/if}
@@ -77,6 +89,7 @@
         <span>{Math.floor(tile.position_seconds / 60).toString().padStart(2, '0')}:{Math.floor(tile.position_seconds % 60).toString().padStart(2, '0')}</span>
       </div>
     </div>
+    {/if}
 
   </div>
 </article>
@@ -96,6 +109,7 @@
 
   .tile.status-delayed { border-color: rgb(255 180 42 / 52%); }
   .tile.status-offline { border-color: rgb(255 81 93 / 55%); }
+  .tile.status-disabled { border-color: rgb(255 255 255 / 5%); box-shadow: none; }
 
   .viewport { position: relative; width: 100%; height: 100%; overflow: hidden; }
   .frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }

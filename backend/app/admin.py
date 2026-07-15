@@ -24,10 +24,10 @@ CaptureFactory = Callable[["AdminConfig"], FrameCapture]
 
 class StreamConfig(BaseModel):
     slot: int = Field(ge=1, le=4)
-    source_type: Literal["local", "youtube"] = "local"
+    source_type: Literal["none", "local", "youtube"] = "local"
     filename: str = Field(default="", max_length=255)
     url: str = Field(default="", max_length=2048)
-    title: str = Field(min_length=1, max_length=80)
+    title: str = Field(default="", max_length=80)
 
     @field_validator("filename")
     @classmethod
@@ -40,13 +40,17 @@ class StreamConfig(BaseModel):
     @field_validator("title")
     @classmethod
     def strip_title(cls, value: str) -> str:
-        stripped = value.strip()
-        if not stripped:
-            raise ValueError("Nazwa źródła nie może być pusta")
-        return stripped
+        return value.strip()
 
     @model_validator(mode="after")
     def validate_source(self) -> "StreamConfig":
+        if self.source_type == "none":
+            self.filename = ""
+            self.url = ""
+            self.title = ""
+            return self
+        if not self.title:
+            raise ValueError("Nazwa źródła nie może być pusta")
         if self.source_type == "local":
             if not self.filename:
                 raise ValueError("Wybierz lokalny plik źródłowy")
@@ -81,8 +85,9 @@ class AdminConfig(BaseModel):
         source_keys = [
             (stream.source_type, stream.filename or stream.url)
             for stream in self.streams
+            if stream.source_type != "none"
         ]
-        if len(set(source_keys)) != 4:
+        if len(set(source_keys)) != len(source_keys):
             raise ValueError("Każdy slot musi używać innego źródła")
         self.streams.sort(key=lambda stream: stream.slot)
         return self
@@ -204,6 +209,14 @@ class AdminController:
             raise ValueError(f"Brak pliku w katalogu filmy: {', '.join(missing)}")
 
         async def resolve_source(stream: StreamConfig) -> VideoSource:
+            if stream.source_type == "none":
+                return VideoSource(
+                    id=f"source-{stream.slot}",
+                    title="",
+                    path="",
+                    duration_seconds=None,
+                    source_type="none",
+                )
             if stream.source_type == "local":
                 path = available[stream.filename]
                 duration = await self.duration_probe(path, self.settings.ffprobe_bin)

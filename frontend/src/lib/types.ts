@@ -1,4 +1,4 @@
-export type SourceStatus = 'online' | 'delayed' | 'offline';
+export type SourceStatus = 'online' | 'delayed' | 'offline' | 'disabled';
 
 export interface TileSnapshot {
   source_id: string;
@@ -21,7 +21,7 @@ export interface MosaicState {
 
 export interface StreamConfig {
   slot: number;
-  source_type: 'local' | 'youtube';
+  source_type: 'none' | 'local' | 'youtube';
   filename: string;
   url: string;
   title: string;
