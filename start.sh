@@ -24,7 +24,12 @@ fi
 
 docker compose up -d --build
 
-APP_URL="http://localhost:${MOSAIC_PORT:-8090}"
+PUBLISHED_ADDRESS="$(docker compose port frontend 8080 | head -n 1)"
+APP_PORT="${PUBLISHED_ADDRESS##*:}"
+if [[ -z "$APP_PORT" || "$APP_PORT" == "$PUBLISHED_ADDRESS" ]]; then
+  APP_PORT="${MOSAIC_PORT:-8090}"
+fi
+APP_URL="http://localhost:$APP_PORT"
 echo "Mozaika TV działa pod adresem: $APP_URL"
 
 if [[ "${NO_BROWSER:-0}" != "1" ]]; then
