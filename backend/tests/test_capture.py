@@ -1,10 +1,12 @@
+import sys
+import types
 from pathlib import Path
 
 import pytest
 
 from app.capture import FFmpegCapture
 from app.engine import VideoSource
-from app.youtube import ResolvedYouTubeSource
+from app.youtube import ResolvedYouTubeSource, YtDlpYouTubeResolver
 
 
 def make_fake_ffmpeg(tmp_path: Path) -> Path:
@@ -42,6 +44,37 @@ class RefreshingResolver:
             duration_seconds=60.0,
             is_live=False,
         )
+
+
+def test_youtube_resolver_passes_configured_cookiefile_to_yt_dlp(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeYoutubeDL:
+        def __init__(self, options: dict[str, object]) -> None:
+            captured.update(options)
+
+        def __enter__(self) -> "FakeYoutubeDL":
+            return self
+
+        def __exit__(self, *_: object) -> None:
+            return None
+
+        def extract_info(self, _: str, *, download: bool) -> dict[str, object]:
+            assert download is False
+            return {
+                "url": "https://stream.example/video.mp4",
+                "duration": 60,
+                "webpage_url": "https://www.youtube.com/watch?v=video123",
+                "title": "Film",
+            }
+
+    monkeypatch.setitem(sys.modules, "yt_dlp", types.SimpleNamespace(YoutubeDL=FakeYoutubeDL))
+
+    resolver = YtDlpYouTubeResolver(cookiefile=Path("/run/secrets/youtube-cookies.txt"))
+    resolved = resolver._resolve_sync("https://www.youtube.com/watch?v=video123")
+
+    assert captured["cookiefile"] == "/run/secrets/youtube-cookies.txt"
+    assert resolved.stream_url == "https://stream.example/video.mp4"
 
 
 @pytest.mark.asyncio

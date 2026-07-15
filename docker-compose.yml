@@ -10,6 +10,7 @@ services:
       MOSAIC_FRAME_WIDTH: ${MOSAIC_FRAME_WIDTH:-960}
       MOSAIC_FRAME_HEIGHT: ${MOSAIC_FRAME_HEIGHT:-540}
       MOSAIC_RETAINED_BATCHES: ${MOSAIC_RETAINED_BATCHES:-30}
+      MOSAIC_YOUTUBE_COOKIEFILE: ${MOSAIC_YOUTUBE_COOKIEFILE:-}
     volumes:
       - ./filmy:/videos:ro
       - mosaic-runtime:/runtime

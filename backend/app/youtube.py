@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol
 from urllib.parse import urlparse
 
@@ -36,8 +38,14 @@ def validate_youtube_url(value: str) -> str:
 
 
 class YtDlpYouTubeResolver:
-    def __init__(self, max_height: int = 1080) -> None:
+    def __init__(
+        self, max_height: int = 1080, cookiefile: Path | None = None
+    ) -> None:
         self.max_height = max_height
+        configured_cookiefile = os.getenv("MOSAIC_YOUTUBE_COOKIEFILE", "").strip()
+        self.cookiefile = cookiefile or (
+            Path(configured_cookiefile) if configured_cookiefile else None
+        )
 
     async def resolve(self, url: str) -> ResolvedYouTubeSource:
         validated_url = validate_youtube_url(url)
@@ -56,6 +64,8 @@ class YtDlpYouTubeResolver:
                 f"best[height<={self.max_height}]/bestvideo/best"
             ),
         }
+        if self.cookiefile is not None:
+            options["cookiefile"] = str(self.cookiefile)
         try:
             with YoutubeDL(options) as downloader:
                 info = downloader.extract_info(url, download=False)

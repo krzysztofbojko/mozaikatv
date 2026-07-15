@@ -87,7 +87,13 @@ MOSAIC_REFRESH_MAX=5
 MOSAIC_FRAME_WIDTH=960
 MOSAIC_FRAME_HEIGHT=540
 MOSAIC_RETAINED_BATCHES=30
+# Opcjonalny plik Netscape cookies.txt dla YouTube (np. /runtime/youtube-cookies.txt)
+MOSAIC_YOUTUBE_COOKIEFILE=
 ```
+
+Jeżeli YouTube zgłasza „Sign in to confirm you’re not a bot”, wyeksportuj
+cookies z zalogowanej przeglądarki do formatu Netscape `cookies.txt` i wskaż
+ich ścieżkę przez `MOSAIC_YOUTUBE_COOKIEFILE`. Pliku nie dodawaj do repozytorium.
 
 ## Zasady działania
 
